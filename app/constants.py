@@ -1,0 +1,2 @@
+SELECTION_BG = "#a4330d"
+SELECTION_FG = "#ffffff"
