@@ -42,6 +42,7 @@ class MainController:
         self._view.column_capitalize_requested.connect(self.column_values_to_capitalize)
         self._view.headers_lower_requested.connect(self.headers_to_lower)
         self._view.headers_capitalize_requested.connect(self.headers_to_capitalize)
+        self._view.create_hash_requested.connect(self.create_hash)
         self._view.file_dropped.connect(self.open_file)
         self._view.header_clicked.connect(self.on_header_clicked)
         self._view.cell_clicked.connect(self.on_cell_clicked)
@@ -314,6 +315,9 @@ class MainController:
             return
         self._model.transform_all_headers(str.capitalize)
         self._view.refresh_viewport()
+
+    def create_hash(self) -> None:
+        self._view.show_create_hash_dialog()
 
     def open_dialog(self) -> None:
         path = self._view.ask_open_file_path()

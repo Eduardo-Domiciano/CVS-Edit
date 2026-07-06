@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from app.constants import SELECTION_BG, SELECTION_FG
 from app.models.csv_table_model import CsvTableModel
 from app.views.create_csv_dialog import CreateCsvColumnsDialog
+from app.views.create_hash_dialog import CreateHashDialog
 from app.views.widgets.bold_selection_delegate import BoldSelectionDelegate
 from app.views.widgets.column_highlight_header import ColumnHighlightHeader
 
@@ -39,6 +40,7 @@ class MainWindow(QMainWindow):
     column_capitalize_requested = Signal()
     headers_lower_requested = Signal()
     headers_capitalize_requested = Signal()
+    create_hash_requested = Signal()
     file_dropped = Signal(object)
     header_clicked = Signal(int)
     cell_clicked = Signal(QModelIndex)
@@ -239,6 +241,12 @@ class MainWindow(QMainWindow):
         row_menu.addAction(headers_lower_action)
         row_menu.addAction(headers_capitalize_action)
 
+        create_hash_action = QAction("Criar Hash", self)
+        create_hash_action.triggered.connect(self.create_hash_requested.emit)
+
+        hash_menu = self.menuBar().addMenu("Hash")
+        hash_menu.addAction(create_hash_action)
+
     def is_table_visible(self) -> bool:
         return self._table.isVisible()
 
@@ -395,6 +403,9 @@ class MainWindow(QMainWindow):
         if dialog.exec() != CreateCsvColumnsDialog.DialogCode.Accepted:
             return None
         return dialog.column_names()
+
+    def show_create_hash_dialog(self) -> None:
+        CreateHashDialog(self).exec()
 
     def ask_header_text(self, current: str) -> str | None:
         text, ok = QInputDialog.getText(
