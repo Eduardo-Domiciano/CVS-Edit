@@ -22,6 +22,7 @@ from app.constants import SELECTION_BG, SELECTION_FG
 from app.models.csv_table_model import CsvTableModel
 from app.views.create_csv_dialog import CreateCsvColumnsDialog
 from app.views.create_hash_dialog import CreateHashDialog
+from app.views.search_hash_dialog import SearchHashDialog
 from app.views.widgets.bold_selection_delegate import BoldSelectionDelegate
 from app.views.widgets.column_highlight_header import ColumnHighlightHeader
 
@@ -41,6 +42,7 @@ class MainWindow(QMainWindow):
     headers_lower_requested = Signal()
     headers_capitalize_requested = Signal()
     create_hash_requested = Signal()
+    search_hash_requested = Signal(str)
     file_dropped = Signal(object)
     header_clicked = Signal(int)
     cell_clicked = Signal(QModelIndex)
@@ -244,8 +246,14 @@ class MainWindow(QMainWindow):
         create_hash_action = QAction("Criar Hash", self)
         create_hash_action.triggered.connect(self.create_hash_requested.emit)
 
+        search_hash_action = QAction("Buscar hash no CSV...", self)
+        search_hash_action.triggered.connect(
+            lambda: self.search_hash_requested.emit("")
+        )
+
         hash_menu = self.menuBar().addMenu("Hash")
         hash_menu.addAction(create_hash_action)
+        hash_menu.addAction(search_hash_action)
 
     def is_table_visible(self) -> bool:
         return self._table.isVisible()
@@ -302,6 +310,20 @@ class MainWindow(QMainWindow):
     def select_row(self, row: int) -> None:
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.selectRow(row)
+
+    def select_cell(self, row: int, data_col: int) -> None:
+        view_col = CsvTableModel.to_view_column(data_col)
+        index = self._model.index(row, view_col)
+        self._table.setSelectionBehavior(QAbstractItemView.SelectItems)
+        self._table.setCurrentIndex(index)
+        self._table.selectionModel().select(
+            index,
+            QItemSelectionModel.SelectionFlag.ClearAndSelect,
+        )
+        self._table.scrollTo(index, QAbstractItemView.ScrollHint.PositionAtCenter)
+        self._highlighted_column = None
+        self.refresh_viewport()
+
     def selected_data_column(self) -> int | None:
         index = self._table.currentIndex()
         if index.isValid():
@@ -405,7 +427,22 @@ class MainWindow(QMainWindow):
         return dialog.column_names()
 
     def show_create_hash_dialog(self) -> None:
-        CreateHashDialog(self).exec()
+        CreateHashDialog(
+            self,
+            on_search_in_csv=lambda h: self.search_hash_requested.emit(h),
+        ).exec()
+
+    def show_search_hash_dialog(
+        self,
+        initial_hash: str,
+        on_select,
+    ) -> None:
+        SearchHashDialog(
+            self._model,
+            on_select,
+            self,
+            initial_hash=initial_hash,
+        ).exec()
 
     def ask_header_text(self, current: str) -> str | None:
         text, ok = QInputDialog.getText(

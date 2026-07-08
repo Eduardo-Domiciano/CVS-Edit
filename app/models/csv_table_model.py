@@ -1,4 +1,5 @@
 import csv
+from dataclasses import dataclass
 from pathlib import Path
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
@@ -7,6 +8,14 @@ from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
 
 
 
+
+
+@dataclass(frozen=True)
+class CellMatch:
+    row: int
+    data_col: int
+    column_name: str
+    value: str
 
 
 class CsvTableModel(QAbstractTableModel):
@@ -298,6 +307,24 @@ class CsvTableModel(QAbstractTableModel):
             bottom_right = self.index(self.rowCount() - 1, view_col)
             self.dataChanged.emit(top_left, bottom_right, [Qt.DisplayRole, Qt.EditRole])
         return True
+
+    def find_value(self, target: str) -> list[CellMatch]:
+        results: list[CellMatch] = []
+        col_count = self.data_column_count()
+        for row_idx, row in enumerate(self._rows):
+            for col_idx in range(col_count):
+                if col_idx >= len(row):
+                    continue
+                value = row[col_idx]
+                if value == target:
+                    if col_idx < len(self._headers):
+                        column_name = self._headers[col_idx]
+                    else:
+                        column_name = f"Coluna {col_idx + 1}"
+                    results.append(
+                        CellMatch(row_idx, col_idx, column_name, value)
+                    )
+        return results
 
     def checked_rows(self) -> list[int]:
         self._sync_row_checks()

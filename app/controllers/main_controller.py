@@ -43,6 +43,7 @@ class MainController:
         self._view.headers_lower_requested.connect(self.headers_to_lower)
         self._view.headers_capitalize_requested.connect(self.headers_to_capitalize)
         self._view.create_hash_requested.connect(self.create_hash)
+        self._view.search_hash_requested.connect(self.search_hash)
         self._view.file_dropped.connect(self.open_file)
         self._view.header_clicked.connect(self.on_header_clicked)
         self._view.cell_clicked.connect(self.on_cell_clicked)
@@ -318,6 +319,28 @@ class MainController:
 
     def create_hash(self) -> None:
         self._view.show_create_hash_dialog()
+
+    def search_hash(self, initial_hash: str = "") -> None:
+        if not self._view.is_table_visible():
+            self._view.show_info(
+                "Buscar hash no CSV",
+                "Abra um arquivo CSV antes de buscar.",
+            )
+            return
+
+        self._view.show_search_hash_dialog(
+            initial_hash,
+            self._go_to_hash_match,
+        )
+
+    def _go_to_hash_match(self, row: int, data_col: int) -> None:
+        self._view.select_cell(row, data_col)
+        header = self._model.headerData(
+            CsvTableModel.to_view_column(data_col), Qt.Horizontal
+        )
+        self._view.show_status_message(
+            f"Hash encontrado na linha {row + 1}, coluna \"{header}\""
+        )
 
     def open_dialog(self) -> None:
         path = self._view.ask_open_file_path()
