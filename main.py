@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QApplication
 
 from app.controllers.main_controller import MainController
 from app.models.csv_table_model import CsvTableModel
+from app.theme import apply_theme
 from app.views.main_window import MainWindow
 
 def _check_qt_system_deps() -> str | None:
@@ -36,6 +37,7 @@ def main() -> None:
 
     app = QApplication(sys.argv)
     app.setApplicationName("Visualizador CSV")
+    apply_theme(app)
 
     model = CsvTableModel()
     view = MainWindow(model)

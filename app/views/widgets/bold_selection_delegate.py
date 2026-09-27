@@ -2,7 +2,13 @@ from collections.abc import Callable
 
 from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QColor, QCursor, QFont, QFontMetrics, QPalette
-from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QTableView, QToolTip
+from PySide6.QtWidgets import (
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QTableView,
+    QToolTip,
+)
 
 from app.constants import SELECTION_BG, SELECTION_FG
 from app.models.csv_table_model import CsvTableModel
@@ -22,7 +28,8 @@ class BoldSelectionDelegate(QStyledItemDelegate):
         opt.font = font
 
     def paint(self, painter, option, index) -> None:
-        opt = option
+        opt = QStyleOptionViewItem(option)
+        self.initStyleOption(opt, index)
         if CsvTableModel.is_checkbox_column(index.column()):
             super().paint(painter, opt, index)
             return
@@ -31,7 +38,9 @@ class BoldSelectionDelegate(QStyledItemDelegate):
         is_column = col is not None and index.column() == col
         is_selected = bool(opt.state & QStyle.StateFlag.State_Selected)
         if is_column or is_selected:
+            painter.fillRect(opt.rect, QColor(SELECTION_BG))
             self._apply_selection_style(opt)
+            opt.state &= ~QStyle.StateFlag.State_Selected
         super().paint(painter, opt, index)
 
     def helpEvent(self, event, view, option, index) -> bool:

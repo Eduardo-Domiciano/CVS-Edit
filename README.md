@@ -2,6 +2,8 @@
 
 Aplicativo desktop para visualizar e editar arquivos CSV, com interface gráfica construída em **PySide6** (Qt for Python).
 
+![editor cvs](img/screenshot.png)
+
 ## Funcionalidades
 
 - **Abrir CSV** — por diálogo de arquivo, arrastar e soltar ou argumento na linha de comando

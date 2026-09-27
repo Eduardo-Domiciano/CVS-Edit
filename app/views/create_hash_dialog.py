@@ -1,7 +1,5 @@
-import bcrypt
 from collections.abc import Callable
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -16,42 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-_BCRYPT_SALT_CHARS = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-
-
-def _to_bcrypt_salt_component(text: str) -> str:
-    chars = []
-    for char in text:
-        if char in _BCRYPT_SALT_CHARS:
-            chars.append(char)
-        else:
-            chars.append(_BCRYPT_SALT_CHARS[ord(char) % len(_BCRYPT_SALT_CHARS)])
-        if len(chars) == 22:
-            break
-    while len(chars) < 22:
-        chars.append(".")
-    return "".join(chars)
-
-
-def _empty_bcrypt_salt(cost: int) -> bytes:
-    return f"$2b${cost:02d}${'.' * 22}".encode()
-
-
-def create_password_hash(
-    password: str,
-    cost: int,
-    custom_salt: str | None = None,
-    *,
-    auto_generate_salt: bool = True,
-) -> str:
-    if custom_salt:
-        salt_component = _to_bcrypt_salt_component(custom_salt)
-        salt = f"$2b${cost:02d}${salt_component}".encode()
-    elif auto_generate_salt:
-        salt = bcrypt.gensalt(rounds=cost)
-    else:
-        salt = _empty_bcrypt_salt(cost)
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+from app.services.hash_service import create_password_hash
 
 
 class CreateHashDialog(QDialog):

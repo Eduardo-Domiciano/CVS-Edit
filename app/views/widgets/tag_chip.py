@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 
-from app.constants import SELECTION_BG, SELECTION_FG
+from app.constants import LIGHT_GRAY, SELECTION_BG, SELECTION_FG
 
 
 class TagChip(QWidget):
@@ -27,7 +27,7 @@ class TagChip(QWidget):
         remove_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         remove_btn.setStyleSheet(
             f"QPushButton {{ border: none; color: {SELECTION_FG}; font-weight: bold; }}"
-            "QPushButton:hover { color: #ffcccc; }"
+            f"QPushButton:hover {{ color: {LIGHT_GRAY}; }}"
         )
         remove_btn.clicked.connect(lambda *_args: on_remove())
 

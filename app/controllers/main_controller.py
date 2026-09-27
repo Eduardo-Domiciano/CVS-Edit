@@ -44,6 +44,7 @@ class MainController:
         self._view.headers_capitalize_requested.connect(self.headers_to_capitalize)
         self._view.create_hash_requested.connect(self.create_hash)
         self._view.search_hash_requested.connect(self.search_hash)
+        self._view.brute_force_requested.connect(self.brute_force)
         self._view.file_dropped.connect(self.open_file)
         self._view.header_clicked.connect(self.on_header_clicked)
         self._view.cell_clicked.connect(self.on_cell_clicked)
@@ -319,6 +320,9 @@ class MainController:
 
     def create_hash(self) -> None:
         self._view.show_create_hash_dialog()
+
+    def brute_force(self) -> None:
+        self._view.show_brute_force_dialog()
 
     def search_hash(self, initial_hash: str = "") -> None:
         if not self._view.is_table_visible():

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QItemSelection, QItemSelectionModel, QModelIndex, Qt, Signal
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QColor, QPalette
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QFileDialog,
@@ -12,14 +12,16 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QStatusBar,
     QTableView,
     QToolTip,
     QVBoxLayout,
     QWidget,
 )
-from app.constants import SELECTION_BG, SELECTION_FG
+from app.constants import BLACK, ORANGE, SELECTION_BG, SELECTION_FG, WHITE
 from app.models.csv_table_model import CsvTableModel
+from app.views.brute_force_dialog import BruteForceDialog
 from app.views.create_csv_dialog import CreateCsvColumnsDialog
 from app.views.create_hash_dialog import CreateHashDialog
 from app.views.search_hash_dialog import SearchHashDialog
@@ -43,6 +45,7 @@ class MainWindow(QMainWindow):
     headers_capitalize_requested = Signal()
     create_hash_requested = Signal()
     search_hash_requested = Signal(str)
+    brute_force_requested = Signal()
     file_dropped = Signal(object)
     header_clicked = Signal(int)
     cell_clicked = Signal(QModelIndex)
@@ -68,9 +71,28 @@ class MainWindow(QMainWindow):
             BoldSelectionDelegate(self._table, lambda: self._highlighted_column)
         )
 
+        table_palette = self._table.palette()
+        table_palette.setColor(QPalette.ColorRole.Mid, QColor(ORANGE))
+        self._table.setPalette(table_palette)
+        self._table.setShowGrid(True)
         self._table.setStyleSheet(
-            "QTableView::item:selected {"
-            f" background-color: {SELECTION_BG}; color: {SELECTION_FG}; font-weight: bold; }}"
+            f"""
+            QTableView {{
+                gridline-color: {ORANGE};
+            }}
+            QTableView::item:selected {{
+                background-color: {SELECTION_BG};
+                color: {SELECTION_FG};
+                font-weight: bold;
+            }}
+            QHeaderView::section {{
+                background-color: {BLACK};
+                color: {WHITE};
+                border: 1px solid {ORANGE};
+                padding: 4px;
+                font-weight: bold;
+            }}
+            """
         )
 
 
@@ -84,6 +106,17 @@ class MainWindow(QMainWindow):
             | QAbstractItemView.EditKeyPressed
         )
         header = ColumnHighlightHeader(self._table)
+        header.setStyleSheet(
+            f"""
+            QHeaderView::section {{
+                background-color: {BLACK};
+                color: {WHITE};
+                border: 1px solid {ORANGE};
+                padding: 4px;
+                font-weight: bold;
+            }}
+            """
+        )
         self._table.setHorizontalHeader(header)
         self.fit_columns_to_window()
         header.column_clicked.connect(self.header_clicked.emit)
@@ -119,6 +152,7 @@ class MainWindow(QMainWindow):
    
    
         toolbar = QWidget()
+        toolbar.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         toolbar_layout = QHBoxLayout(toolbar)
         toolbar_layout.setContentsMargins(8, 8, 8, 0)
         toolbar_layout.addWidget(import_btn)
@@ -135,15 +169,16 @@ class MainWindow(QMainWindow):
         )
         placeholder.setAlignment(Qt.AlignCenter)
         placeholder.setStyleSheet("color: #666; font-size: 14px;")
-
-
+        placeholder.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
 
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(toolbar)
-        layout.addWidget(placeholder)
-        layout.addWidget(self._table)
+        layout.addWidget(toolbar, 0)
+        layout.addWidget(placeholder, 1)
+        layout.addWidget(self._table, 1)
         self._table.hide()
         self._placeholder = placeholder
         self.setCentralWidget(container)
@@ -251,9 +286,13 @@ class MainWindow(QMainWindow):
             lambda: self.search_hash_requested.emit("")
         )
 
+        brute_force_action = QAction("Brute-force...", self)
+        brute_force_action.triggered.connect(self.brute_force_requested.emit)
+
         hash_menu = self.menuBar().addMenu("Hash")
         hash_menu.addAction(create_hash_action)
         hash_menu.addAction(search_hash_action)
+        hash_menu.addAction(brute_force_action)
 
     def is_table_visible(self) -> bool:
         return self._table.isVisible()
@@ -431,6 +470,9 @@ class MainWindow(QMainWindow):
             self,
             on_search_in_csv=lambda h: self.search_hash_requested.emit(h),
         ).exec()
+
+    def show_brute_force_dialog(self) -> None:
+        BruteForceDialog(self).exec()
 
     def show_search_hash_dialog(
         self,
